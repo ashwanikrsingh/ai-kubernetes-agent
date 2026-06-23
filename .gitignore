@@ -1,5 +1,4 @@
-# Local tool config with secrets
-.mcp.json
+# Local editor config
 .vscode/
 
 # Logs
