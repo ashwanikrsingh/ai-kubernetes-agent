@@ -1,0 +1,29 @@
+# Scenario 2: ImagePullBackOff — Invalid image tag
+#
+# The container image tag does not exist. Kubernetes cannot pull it → ImagePullBackOff.
+#
+# Apply:  kubectl apply -f 02-image-pull-backoff.yaml
+# Watch:  kubectl get pods -w
+# Clean:  kubectl delete -f 02-image-pull-backoff.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: image-pull-demo
+  namespace: default
+  labels:
+    scenario: image-pull-backoff
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: image-pull-demo
+  template:
+    metadata:
+      labels:
+        app: image-pull-demo
+    spec:
+      containers:
+        - name: app
+          # This image tag intentionally does not exist on Docker Hub
+          image: nginx:this-tag-does-not-exist-v99999

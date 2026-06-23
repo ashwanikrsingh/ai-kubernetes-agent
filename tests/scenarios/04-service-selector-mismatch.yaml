@@ -1,0 +1,47 @@
+# Scenario 4: Service Selector Mismatch — No endpoints behind the service
+#
+# The Deployment's pod label is app=selector-mismatch-demo but the Service
+# selects app=wrong-label. No pods match → Endpoints will be empty → traffic drops.
+#
+# The pod itself is Running, so kubectl get pods shows healthy.
+# The failure is invisible without checking endpoints:
+#   kubectl get endpoints service-mismatch-demo
+#
+# Apply:  kubectl apply -f 04-service-selector-mismatch.yaml
+# Check:  kubectl get endpoints service-mismatch-demo
+# Clean:  kubectl delete -f 04-service-selector-mismatch.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: selector-mismatch-demo
+  namespace: default
+  labels:
+    scenario: service-selector-mismatch
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: selector-mismatch-demo
+  template:
+    metadata:
+      labels:
+        app: selector-mismatch-demo   # <-- correct label on the pod
+    spec:
+      containers:
+        - name: app
+          image: nginx:stable
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: selector-mismatch-demo
+  namespace: default
+spec:
+  selector:
+    app: wrong-label   # <-- intentional mismatch — no pods match this
+  ports:
+    - port: 80
+      targetPort: 80

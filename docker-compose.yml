@@ -1,0 +1,36 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - OPENROUTER_MODEL=${OPENROUTER_MODEL}
+      - KUBECONFIG_PATH=${KUBECONFIG_PATH}
+    volumes:
+      - ./backend:/app
+      - ~/.kube/config-docker:/root/.kube/config:ro
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+        - NEXT_PUBLIC_INSFORGE_URL=${NEXT_PUBLIC_INSFORGE_URL}
+        - NEXT_PUBLIC_INSFORGE_ANON_KEY=${NEXT_PUBLIC_INSFORGE_ANON_KEY}
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+      - NEXT_PUBLIC_INSFORGE_URL=${NEXT_PUBLIC_INSFORGE_URL}
+      - NEXT_PUBLIC_INSFORGE_ANON_KEY=${NEXT_PUBLIC_INSFORGE_ANON_KEY}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev
+    depends_on:
+      - backend

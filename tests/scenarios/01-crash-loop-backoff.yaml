@@ -1,0 +1,40 @@
+# Scenario 1: CrashLoopBackOff — Missing environment variable
+#
+# The container starts, checks for DATABASE_URL, finds it missing, and exits with code 1.
+# Kubernetes restarts it repeatedly → CrashLoopBackOff.
+#
+# Apply:  kubectl apply -f 01-crash-loop-backoff.yaml
+# Watch:  kubectl get pods -w
+# Clean:  kubectl delete -f 01-crash-loop-backoff.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crash-loop-demo
+  namespace: default
+  labels:
+    scenario: crash-loop-backoff
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crash-loop-demo
+  template:
+    metadata:
+      labels:
+        app: crash-loop-demo
+    spec:
+      containers:
+        - name: app
+          image: busybox:stable
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Application starting..."
+              if [ -z "$DATABASE_URL" ]; then
+                echo "FATAL: DATABASE_URL environment variable is not set"
+                echo "Cannot connect to database. Exiting."
+                exit 1
+              fi
+              echo "Connected to $DATABASE_URL"
+          # DATABASE_URL is intentionally NOT set to trigger the crash

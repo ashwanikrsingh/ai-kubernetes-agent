@@ -1,0 +1,39 @@
+# Scenario 3: OOMKilled — Container exceeds memory limit
+#
+# The container is limited to 10Mi but tries to allocate 100Mi → OOMKilled.
+# Kubernetes restarts it, which leads to CrashLoopBackOff with OOMKilled exit reason.
+#
+# Apply:  kubectl apply -f 03-oom-killed.yaml
+# Watch:  kubectl get pods -w
+# Clean:  kubectl delete -f 03-oom-killed.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oom-demo
+  namespace: default
+  labels:
+    scenario: oom-killed
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oom-demo
+  template:
+    metadata:
+      labels:
+        app: oom-demo
+    spec:
+      containers:
+        - name: stress
+          image: polinux/stress
+          command: ["stress"]
+          # Try to allocate 100Mi — far over the 10Mi limit
+          args: ["--vm", "1", "--vm-bytes", "100M", "--vm-hang", "0"]
+          resources:
+            requests:
+              memory: "5Mi"
+              cpu: "100m"
+            limits:
+              memory: "10Mi"   # intentionally too low
+              cpu: "200m"
